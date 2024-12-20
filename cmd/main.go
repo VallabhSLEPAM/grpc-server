@@ -8,8 +8,9 @@ import (
 func main() {
 
 	helloService := &app.HelloService{}
+	bankService := &app.BankService{}
 
-	grpcAdapter := grpc.NewGRPCAdapter(helloService, 9090)
+	grpcAdapter := grpc.NewGRPCAdapter(helloService, bankService, 9090)
 
 	grpcAdapter.Run()
 
