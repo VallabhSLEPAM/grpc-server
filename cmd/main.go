@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"log"
 
-	dbmigrations "github.com/VallabhSLEPAM/grpc-server/db/dbmigration"
+	dbmigration "github.com/VallabhSLEPAM/grpc-server/db"
 	grpc "github.com/VallabhSLEPAM/grpc-server/internal/adapters/grpc"
 	app "github.com/VallabhSLEPAM/grpc-server/internal/application"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 		log.Fatalln("Unable to connect to DB: ", err)
 	}
 
-	dbmigrations.Migrate(sqlDB)
+	dbmigration.Migrate(sqlDB)
 
 	helloService := &app.HelloService{}
 	bankService := &app.BankService{}
