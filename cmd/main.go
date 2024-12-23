@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	dbmigrations "github.com/VallabhSLEPAM/grpc-server/db/migrations"
+	dbmigrations "github.com/VallabhSLEPAM/grpc-server/db/dbmigration"
 	grpc "github.com/VallabhSLEPAM/grpc-server/internal/adapters/grpc"
 	app "github.com/VallabhSLEPAM/grpc-server/internal/application"
 )
