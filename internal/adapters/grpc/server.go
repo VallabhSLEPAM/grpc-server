@@ -31,6 +31,7 @@ func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankSer
 func (adapter *GRPCAdapter) Run() {
 
 	var err error
+	// Create a listener for TCP connections
 	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", adapter.grpcPort))
 
 	if err != nil {
@@ -39,12 +40,15 @@ func (adapter *GRPCAdapter) Run() {
 
 	log.Println("Server listening on port ", adapter.grpcPort)
 
+	// Create a gRPC server
 	grpcServiceRegistrar := grpc.NewServer()
 	adapter.server = grpcServiceRegistrar
 
+	// Associate the gRPC server with gRPC service registrar and pass it the struct which will implement the rpc methods
 	hello.RegisterHelloServiceServer(grpcServiceRegistrar, adapter)
 	bank.RegisterBankServiceServer(grpcServiceRegistrar, adapter)
 
+	// Now the service registrar will start serving the request taking the TCP listener as input
 	if err = grpcServiceRegistrar.Serve(listen); err != nil {
 		log.Fatalf("Failed to server gRPC on port :%v : %v\n", adapter.grpcPort, err)
 	}
