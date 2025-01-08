@@ -3,7 +3,7 @@ package database
 import (
 	"time"
 
-	uuid "github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 type BankAccountORM struct {
@@ -34,4 +34,35 @@ type BankTransactionORM struct {
 
 func (BankTransactionORM BankTransactionORM) TableName() string {
 	return "bank_transactions"
+}
+
+type BankExchangeRateORM struct {
+	ExchangeRateUUID   uuid.UUID `gorm:"primaryKey"`
+	FromCurrency       string
+	ToCurrency         string
+	Rate               float64
+	ValidFromTimestamp time.Time
+	ValidToTimestamp   time.Time
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
+func (BankExchangeRateORM) TableName() string {
+	return "bank_exchange_rates"
+}
+
+type BankTransferORM struct {
+	TransferUUID      uuid.UUID `gorm:"primaryKey"`
+	FromAccountUUID   uuid.UUID
+	ToAccountUUID     uuid.UUID
+	Currency          string
+	Amount            float64
+	TransferTimestamp time.Time
+	TransferSuccess   bool
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+func (BankTransferORM) TableName() string {
+	return "bank_transfers"
 }
