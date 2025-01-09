@@ -103,14 +103,17 @@ func (service *BankService) Transfer(tt bank.TransferTransaction) (uuid.UUID, bo
 
 	fromAccountORM, err := service.db.GetBankAccountByAccountNumber(tt.FromAccount)
 	if err != nil {
-		log.Println("Can't find transfer from account %v: %v", tt.FromAccount, err)
-		return uuid.Nil, false, err
+		log.Printf("Can't find transfer from account %v: %v\n", tt.FromAccount, err)
+		return uuid.Nil, false, bank.ErrTransferSourceAccountNotFound
 	}
 
+	if fromAccountORM.CurrentBalance < tt.Amount {
+		return uuid.Nil, false, bank.ErrTransferTransactionPair
+	}
 	toAccountORM, err := service.db.GetBankAccountByAccountNumber(tt.ToAccount)
 	if err != nil {
-		log.Println("Can't find transfer to account %v: %v", tt.ToAccount, err)
-		return uuid.Nil, false, err
+		log.Printf("Can't find transfer to account %v: %v\n", tt.ToAccount, err)
+		return uuid.Nil, false, bank.ErrTransferDestincationAccountNotFound
 	}
 
 	fromTransactionORM := database.BankTransactionORM{
@@ -152,12 +155,12 @@ func (service *BankService) Transfer(tt bank.TransferTransaction) (uuid.UUID, bo
 
 	if _, err := service.db.CreateTransfer(transferORM); err != nil {
 		log.Printf("Can't create transfer from %v to %v\n", fromAccountORM.AccountNumber, toAccountORM.AccountNumber)
-		return uuid.Nil, false, err
+		return uuid.Nil, false, bank.ErrTransferRecordCreationFailed
 	}
 
 	if transferPairSuccess, err := service.db.CreateTransferTransactionPair(fromAccountORM, toAccountORM, fromTransactionORM, toTransactionORM); transferPairSuccess {
 		service.db.UpdateTransferStatus(transferORM, true)
-		return newTransferUUID, true, nil
+		return newTransferUUID, true, bank.ErrTransferTransactionPair
 	} else {
 		return newTransferUUID, false, err
 	}
