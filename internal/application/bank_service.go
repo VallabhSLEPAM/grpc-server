@@ -21,12 +21,13 @@ func NewBankService(dbPort port.BankDatabasePort) *BankService {
 	}
 }
 
-func (service *BankService) FindCurrentBalance(acct string) float64 {
+func (service *BankService) FindCurrentBalance(acct string) (float64, error) {
 	bankAccount, err := service.db.GetBankAccountByAccountNumber(acct)
 	if err != nil {
 		log.Println("Error in FindCurrentBalance:", err)
+		return 0, err
 	}
-	return bankAccount.CurrentBalance
+	return bankAccount.CurrentBalance, nil
 }
 
 func (service *BankService) CreateExchangeRate(r bank.ExchangeRate) (uuid.UUID, error) {
@@ -44,12 +45,12 @@ func (service *BankService) CreateExchangeRate(r bank.ExchangeRate) (uuid.UUID, 
 	return service.db.CreateExchangeRate(bankExchangeRateORM)
 }
 
-func (service *BankService) FindExchangeRate(fromCurr, toCurr string, ts time.Time) float64 {
+func (service *BankService) FindExchangeRate(fromCurr, toCurr string, ts time.Time) (float64, error) {
 	exchangeRate, err := service.db.GetExchangeRateAtTimestamp(fromCurr, toCurr, ts)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	return float64(exchangeRate.Rate)
+	return float64(exchangeRate.Rate), nil
 }
 
 func (service *BankService) CreateTransaction(acct string, t bank.Transaction) (uuid.UUID, error) {
@@ -58,9 +59,16 @@ func (service *BankService) CreateTransaction(acct string, t bank.Transaction) (
 
 	bankAccountORM, err := service.db.GetBankAccountByAccountNumber(acct)
 	if err != nil {
-		log.Println("Can't create transaction for %v: %v\n", acct, err)
-		return uuid.Nil, err
+		log.Printf("Can't create transaction for %v: %v\n", acct, err)
+		return uuid.Nil, fmt.Errorf("can't create transaction for %v: %v", acct, err)
 	}
+
+	if t.TransactionType == bank.TransactionTypeOut && bankAccountORM.CurrentBalance < t.Amount {
+		return bankAccountORM.AccountUUID, fmt.Errorf(
+			"insufficient balance",
+		)
+	}
+
 	bankTransactionORM := database.BankTransactionORM{
 		TransactionUUID:      newUUID,
 		AccountUUID:          bankAccountORM.AccountUUID,

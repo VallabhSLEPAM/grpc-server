@@ -13,9 +13,9 @@ type HelloServicePort interface {
 }
 
 type BankServicePort interface {
-	FindCurrentBalance(acct string) float64
+	FindCurrentBalance(acct string) (float64, error)
 	CreateExchangeRate(r bank.ExchangeRate) (uuid.UUID, error)
-	FindExchangeRate(fromCurr, toCurr string, ts time.Time) float64
+	FindExchangeRate(fromCurr, toCurr string, ts time.Time) (float64, error)
 	CreateTransaction(acct string, t bank.Transaction) (uuid.UUID, error)
 	CalculateTransactionSummary(tcur *bank.TransactionSummary, transaction bank.Transaction) error
 	Transfer(bank.TransferTransaction) (uuid.UUID, bool, error)

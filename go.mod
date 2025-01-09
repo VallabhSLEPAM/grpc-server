@@ -3,7 +3,7 @@ module github.com/VallabhSLEPAM/grpc-server
 go 1.23.2
 
 require (
-	github.com/VallabhSLEPAM/go-with-grpc v0.0.12
+	github.com/VallabhSLEPAM/go-with-grpc v0.0.13
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/uuid v1.6.0

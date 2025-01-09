@@ -8,18 +8,28 @@ import (
 
 	protobank "github.com/VallabhSLEPAM/go-with-grpc/protogen/go/bank"
 	"github.com/VallabhSLEPAM/grpc-server/internal/application/domain/bank"
+	"github.com/google/uuid"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/genproto/googleapis/type/datetime"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (adapter *GRPCAdapter) GetCurrentBalance(ctx context.Context, req *protobank.CurrentBalanceRequest) (*protobank.CurrentBalanceResponse, error) {
 
 	now := time.Now()
-	bal := adapter.bankService.FindCurrentBalance(req.AccountNumber)
+	bal, err := adapter.bankService.FindCurrentBalance(req.AccountNumber)
 
+	if err != nil {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"account %v not found", req.AccountNumber,
+		)
+	}
 	return &protobank.CurrentBalanceResponse{
 		Amount: bal,
 		CurrentDate: &date.Date{
@@ -39,8 +49,19 @@ func (adapter *GRPCAdapter) FetchExchangeRates(exchangeRateReq *protobank.Exchan
 			return nil
 		default:
 			now := time.Now().Truncate(time.Second)
-			rate := adapter.bankService.FindExchangeRate(exchangeRateReq.FromCurrency, exchangeRateReq.ToCurrency, now)
-
+			rate, err := adapter.bankService.FindExchangeRate(exchangeRateReq.FromCurrency, exchangeRateReq.ToCurrency, now)
+			if err != nil {
+				s := status.New(codes.InvalidArgument, "Currency is invalid")
+				s, _ = s.WithDetails(&errdetails.ErrorInfo{
+					Domain: "my-bank-website.com",
+					Reason: "INVALID_CURRENCY",
+					Metadata: map[string]string{
+						"from_currency": exchangeRateReq.FromCurrency,
+						"to_currency":   exchangeRateReq.ToCurrency,
+					},
+				})
+				return s.Err()
+			}
 			stream.Send(
 				&protobank.ExchangeRateResponse{
 					FromCurrency: exchangeRateReq.FromCurrency,
@@ -122,7 +143,30 @@ func (grpcAdapter *GRPCAdapter) SummarizeTransactions(stream grpc.ClientStreamin
 			Timestamp:       ts,
 			TransactionType: ttype,
 		}
-		_, err = grpcAdapter.bankService.CreateTransaction(acct, tcur)
+		transactionUUID, err := grpcAdapter.bankService.CreateTransaction(acct, tcur)
+		if err != nil && transactionUUID == uuid.Nil {
+			s := status.New(codes.InvalidArgument, err.Error())
+			s, _ = s.WithDetails(&errdetails.BadRequest{
+				FieldViolations: []*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "account_numbder",
+						Description: "Invalid account number",
+					},
+				},
+			})
+			return s.Err()
+		} else if err != nil && transactionUUID != uuid.Nil {
+			s := status.New(codes.InvalidArgument, err.Error())
+			s, _ = s.WithDetails(&errdetails.BadRequest{
+				FieldViolations: []*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "amount",
+						Description: "Insufficient balance to withraw",
+					},
+				},
+			})
+			return s.Err()
+		}
 		if err != nil {
 			log.Fatalf("Error while creating transaction: %v", err)
 		}
