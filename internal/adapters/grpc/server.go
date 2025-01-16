@@ -7,24 +7,27 @@ import (
 
 	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/bank"
 	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/hello"
+	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/resiliency"
 	port "github.com/VallabhSLEPAM/grpc-server/internal/ports.go"
 	"google.golang.org/grpc"
 )
 
 type GRPCAdapter struct {
-	helloService port.HelloServicePort
-	bankService  port.BankServicePort
-	grpcPort     int
-	server       *grpc.Server
+	helloService      port.HelloServicePort
+	bankService       port.BankServicePort
+	resiliencyService port.ResiliencyServicePort
+	grpcPort          int
+	server            *grpc.Server
 	hello.HelloServiceServer
 	bank.BankServiceServer
 }
 
-func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankServicePort, grpcPort int) *GRPCAdapter {
+func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankServicePort, resiliencyService port.ResiliencyServicePort, grpcPort int) *GRPCAdapter {
 	return &GRPCAdapter{
-		helloService: helloService,
-		bankService:  bankService,
-		grpcPort:     grpcPort,
+		helloService:      helloService,
+		bankService:       bankService,
+		resiliencyService: resiliencyService,
+		grpcPort:          grpcPort,
 	}
 }
 
@@ -47,7 +50,7 @@ func (adapter *GRPCAdapter) Run() {
 	// Associate the gRPC server with gRPC service registrar and pass it the struct which will implement the rpc methods
 	hello.RegisterHelloServiceServer(grpcServiceRegistrar, adapter)
 	bank.RegisterBankServiceServer(grpcServiceRegistrar, adapter)
-
+	resiliency.RegisterResiliencyServiceServer(grpcServiceRegistrar, adapter)
 	// Now the service registrar will start serving the request taking the TCP listener as input
 	if err = grpcServiceRegistrar.Serve(listen); err != nil {
 		log.Fatalf("Failed to server gRPC on port :%v : %v\n", adapter.grpcPort, err)
