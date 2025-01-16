@@ -20,6 +20,7 @@ type GRPCAdapter struct {
 	server            *grpc.Server
 	hello.HelloServiceServer
 	bank.BankServiceServer
+	resiliency.ResiliencyServiceServer
 }
 
 func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankServicePort, resiliencyService port.ResiliencyServicePort, grpcPort int) *GRPCAdapter {
