@@ -12,6 +12,7 @@ import (
 	port "github.com/VallabhSLEPAM/grpc-server/internal/ports.go"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type GRPCAdapter struct {
@@ -48,8 +49,14 @@ func (adapter *GRPCAdapter) Run() {
 
 	log.Println("Server listening on port ", adapter.grpcPort)
 
+	creds, err := credentials.NewClientTLSFromFile("ssl/server.crt", "ssl/server.pem")
+	if err != nil {
+		log.Fatalln("Can't create server credentials: ", err)
+	}
+
 	// Create a gRPC server
 	grpcServiceRegistrar := grpc.NewServer(
+		grpc.Creds(creds),
 	// grpc.ChainUnaryInterceptor(
 	// 	interceptor.BasicUnaryServerInterceptor(),
 	// 	interceptor.LogUnaryServerInterceptor(),
