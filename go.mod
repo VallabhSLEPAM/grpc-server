@@ -3,8 +3,7 @@ module github.com/VallabhSLEPAM/grpc-server
 go 1.23.2
 
 require (
-	github.com/VallabhSLEPAM/go-with-grpc v0.0.15
-	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/VallabhSLEPAM/go-with-grpc v0.0.16
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
@@ -20,13 +19,10 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/lib/pq v1.10.9 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/net v0.34.0 // indirect

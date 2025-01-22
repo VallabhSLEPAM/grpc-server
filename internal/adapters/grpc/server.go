@@ -7,8 +7,10 @@ import (
 
 	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/bank"
 	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/hello"
+
 	"github.com/VallabhSLEPAM/go-with-grpc/protogen/go/resiliency"
 	port "github.com/VallabhSLEPAM/grpc-server/internal/ports.go"
+
 	"google.golang.org/grpc"
 )
 
@@ -21,6 +23,7 @@ type GRPCAdapter struct {
 	hello.HelloServiceServer
 	bank.BankServiceServer
 	resiliency.ResiliencyServiceServer
+	resiliency.ResiliencyServiceWithMetadataServer
 }
 
 func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankServicePort, resiliencyService port.ResiliencyServicePort, grpcPort int) *GRPCAdapter {
@@ -28,7 +31,8 @@ func NewGRPCAdapter(helloService port.HelloServicePort, bankService port.BankSer
 		helloService:      helloService,
 		bankService:       bankService,
 		resiliencyService: resiliencyService,
-		grpcPort:          grpcPort,
+		// ResiliencyServiceWithMetadataServer: res,
+		grpcPort: grpcPort,
 	}
 }
 
@@ -45,13 +49,23 @@ func (adapter *GRPCAdapter) Run() {
 	log.Println("Server listening on port ", adapter.grpcPort)
 
 	// Create a gRPC server
-	grpcServiceRegistrar := grpc.NewServer()
+	grpcServiceRegistrar := grpc.NewServer(
+	// grpc.ChainUnaryInterceptor(
+	// 	interceptor.BasicUnaryServerInterceptor(),
+	// 	interceptor.LogUnaryServerInterceptor(),
+	// ),
+	// grpc.ChainStreamInterceptor(
+	// 	interceptor.BasicStreamServerInterceptor(),
+	// 	interceptor.LogServerStreamInterceptor(),
+	// ),
+	)
 	adapter.server = grpcServiceRegistrar
 
 	// Associate the gRPC server with gRPC service registrar and pass it the struct which will implement the rpc methods
 	hello.RegisterHelloServiceServer(grpcServiceRegistrar, adapter)
 	bank.RegisterBankServiceServer(grpcServiceRegistrar, adapter)
 	resiliency.RegisterResiliencyServiceServer(grpcServiceRegistrar, adapter)
+	resiliency.RegisterResiliencyServiceWithMetadataServer(grpcServiceRegistrar, adapter)
 	// Now the service registrar will start serving the request taking the TCP listener as input
 	if err = grpcServiceRegistrar.Serve(listen); err != nil {
 		log.Fatalf("Failed to server gRPC on port :%v : %v\n", adapter.grpcPort, err)
